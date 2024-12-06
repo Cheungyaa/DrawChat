@@ -1,16 +1,13 @@
 package form;
 
 import etc.RoundedButton;
+import service.AuthService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
 import java.net.Socket;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 
 public class SignUpForm extends JFrame {
     private JTextField nameField;
@@ -23,7 +20,14 @@ public class SignUpForm extends JFrame {
     private RoundedButton signUpButton;
     private RoundedButton cancelButton;
 
+    private AuthService authService;
+    private Socket socket;
+
+    // 생성자
     public SignUpForm(Socket socket) {
+        this.socket = socket;  // 소켓 초기화
+        authService = new AuthService(); // AuthService 객체 초기화
+
         setTitle("DrawChat - 회원가입");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -85,31 +89,27 @@ public class SignUpForm extends JFrame {
 
         // 이벤트 설정
         signUpButton.addActionListener(e -> {
-            try {
-                String name = nameField.getText();
-                String id = idField.getText();
-                String password = new String(pwField.getPassword());
-                String email = emailField.getText();
-                String phone = phoneField.getText();
-                String address = addressField.getText();
-                String detailAddress = detailAddressField.getText();
+            String name = nameField.getText();
+            String id = idField.getText();
+            String password = new String(pwField.getPassword());
+            String email = emailField.getText();
+            String phone = phoneField.getText();
+            String address = addressField.getText();
+            String detailAddress = detailAddressField.getText();
 
-                // 서버로 데이터 전송
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                out.println("REGISTER " + name + " " + id + " " + password + " " + email + " " + phone + " " + address + " " + detailAddress);
-
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String response = in.readLine();
-
-                if ("SUCCESS".equals(response)) {
-                    JOptionPane.showMessageDialog(this, "회원가입 성공!");
-                    dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "회원가입 실패. 다시 시도하세요.");
+            // 사용자 등록 처리
+            if (name.isEmpty() || id.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || detailAddress.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "모든 필드를 입력해주세요.");
+            } else {
+                try {
+                    // 소켓을 사용하여 회원가입 처리
+                    authService.register(id, password, name, email, phone, address, detailAddress); // 소켓 전달
+                    JOptionPane.showMessageDialog(this, "환영합니다!");
+                    dispose(); // 회원가입 후 창 닫기
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "회원가입 실패 다시시도해주세요: " + ex.getMessage());
+                    ex.printStackTrace();
                 }
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "서버와의 연결이 끊어졌습니다.");
             }
         });
 
@@ -128,17 +128,14 @@ public class SignUpForm extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                try {
-                    socket.close();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
                 System.exit(0);
             }
         });
 
         setVisible(true);
     }
+
+    // 기타 기존 메소드들
 
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);

@@ -1,5 +1,6 @@
 package form;
 
+import service.AuthService;
 import etc.RoundedButton;
 
 import javax.swing.*;
@@ -13,8 +14,13 @@ public class LoginForm extends JFrame {
     private JPasswordField pwField;
     private RoundedButton loginButton;
     private RoundedButton signUpButton;
+    private Socket socket;
+    private AuthService authService;
 
     public LoginForm(Socket socket) {
+        this.socket = socket;
+        this.authService = new AuthService();  // AuthService 객체 초기화
+        
         setTitle("DrawChat - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 600);
@@ -54,10 +60,15 @@ public class LoginForm extends JFrame {
                 if (username.isEmpty() || password.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "ID와 Password를 입력해주세요.", "Login Error", JOptionPane.ERROR_MESSAGE);
                 } else {
-                    // TODO: 서버와 통신하여 로그인 처리 로직 추가
-                    JOptionPane.showMessageDialog(null, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
-                    dispose(); // 현재 창 닫기
-                    new WaitingForm(username, socket); // 대기실 창으로 이동
+                    // AuthService를 통해 로그인 시도
+                    boolean loginSuccess = authService.login(username, password, socket);
+                    if (loginSuccess) {
+                        JOptionPane.showMessageDialog(null, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
+                        dispose(); // 현재 창 닫기
+                        new WaitingForm(username, socket); // 대기실 창으로 이동
+                    } else {
+                        JOptionPane.showMessageDialog(null, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -65,12 +76,13 @@ public class LoginForm extends JFrame {
         signUpButton = new RoundedButton("Sign Up");
         signUpButton.setBounds(210, 450, 90, 30); // 위치 조정
         signUpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dispose(); // 현재 창 닫기
-                new SignUpForm(socket); // 회원가입 창으로 이동
-            }
-        });
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        // 여기에서 기존에 있는 소켓 객체를 전달하여 SignUpForm 열기
+        new SignUpForm(socket); // 회원가입 창으로 이동
+    }
+});
+
 
         // 배경에 모든 컴포넌트를 추가
         backgroundLabel.add(idLabel);

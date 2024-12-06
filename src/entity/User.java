@@ -3,7 +3,7 @@ package entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,10 @@ public class User {
     private String address; // 주소
 
     @Column(nullable = false)
-    private String detailAddress; // 상세주소
+    private String add_address; // 상세주소
+
+    @Lob // BLOB 타입을 나타내기 위해 @Lob 어노테이션 사용
+    private byte[] face; // 얼굴 이미지
 
     public Long getId() {
         return id;
@@ -87,10 +90,18 @@ public class User {
     }
 
     public String getDetailAddress() {
-        return detailAddress;
+        return add_address;
     }
 
-    public void setDetailAddress(String detailAddress) {
-        this.detailAddress = detailAddress;
+    public void setDetailAddress(String add_address) {
+        this.add_address = add_address;
+    }
+
+    public byte[] getFace() {
+        return face;
+    }
+
+    public void setFace(byte[] face) {
+        this.face = face;
     }
 }
