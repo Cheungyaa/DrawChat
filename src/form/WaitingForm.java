@@ -24,7 +24,7 @@ public class WaitingForm extends JFrame {
         RoundedButton chatRoomButton = new RoundedButton("Enter Chat Room");
         chatRoomButton.addActionListener(e -> {
             dispose(); // 웨이팅폼 닫기
-            new ChatRoomForm(username, socket); // 채팅방 폼 열기
+            new ChatRoomListForm(username, socket); // 채팅방 목록
         });
 
         // 로그아웃 버튼

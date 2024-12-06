@@ -25,4 +25,9 @@ public class ChatService {
     public List<Message> getMessages() {
         return messages;
     }
+
+    public void saveMessage(String roomName, String message) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'saveMessage'");
+    }
 }
