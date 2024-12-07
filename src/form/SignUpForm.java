@@ -2,12 +2,29 @@ package form;
 
 import etc.RoundedButton;
 import service.AuthService;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.core.Scalar;
+import org.opencv.highgui.HighGui;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.Socket;
+import java.awt.image.BufferedImage;
+import javax.swing.ImageIcon;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 
 public class SignUpForm extends JFrame {
     private JTextField nameField;
@@ -19,33 +36,29 @@ public class SignUpForm extends JFrame {
     private JTextField detailAddressField;
     private RoundedButton signUpButton;
     private RoundedButton cancelButton;
+    private RoundedButton faceRecognitionButton;
 
     private AuthService authService;
     private Socket socket;
 
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME); // OpenCV 라이브러리 로드
+    }
+
     // 생성자
     public SignUpForm(Socket socket) {
-        this.socket = socket;  // 소켓 초기화
-        authService = new AuthService(); // AuthService 객체 초기화
+        this.socket = socket;
+        authService = new AuthService();
 
         setTitle("DrawChat - 회원가입");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // 메인 패널 설정
-        JPanel mainPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                ImageIcon bgImage = new ImageIcon("img/Login2.jpg");
-                g.drawImage(bgImage.getImage(), 0, 0, getWidth(), getHeight(), this);
-            }
-        };
+        JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.setOpaque(false);
 
         // 폼 패널 설정
-        JPanel formPanel = new JPanel(new GridLayout(8, 2, 10, 10));
-        formPanel.setOpaque(false); // 투명 설정
+        JPanel formPanel = new JPanel(new GridLayout(9, 2, 10, 10));
+        formPanel.setOpaque(false);
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
         // 필드 추가
@@ -77,6 +90,9 @@ public class SignUpForm extends JFrame {
         detailAddressField = new JTextField();
         formPanel.add(detailAddressField);
 
+        faceRecognitionButton = new RoundedButton("얼굴 인식 등록");
+        formPanel.add(faceRecognitionButton);
+
         // 버튼 패널 설정
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.setOpaque(false);
@@ -97,17 +113,15 @@ public class SignUpForm extends JFrame {
             String address = addressField.getText();
             String detailAddress = detailAddressField.getText();
 
-            // 사용자 등록 처리
             if (name.isEmpty() || id.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || detailAddress.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "모든 필드를 입력해주세요.");
             } else {
                 try {
-                    // 소켓을 사용하여 회원가입 처리
-                    authService.register(id, password, name, email, phone, address, detailAddress); // 소켓 전달
+                    authService.register(id, password, name, email, phone, address, detailAddress);
                     JOptionPane.showMessageDialog(this, "환영합니다!");
                     dispose(); // 회원가입 후 창 닫기
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "회원가입 실패 다시시도해주세요: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, "회원가입 실패: " + ex.getMessage());
                     ex.printStackTrace();
                 }
             }
@@ -115,7 +129,8 @@ public class SignUpForm extends JFrame {
 
         cancelButton.addActionListener(e -> dispose());
 
-        // 메인 패널에 추가
+        faceRecognitionButton.addActionListener(e -> startFaceRecognition());
+
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -124,7 +139,6 @@ public class SignUpForm extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // 창 닫기 이벤트
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -135,12 +149,113 @@ public class SignUpForm extends JFrame {
         setVisible(true);
     }
 
-    // 기타 기존 메소드들
-
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setForeground(Color.WHITE);
         label.setHorizontalAlignment(SwingConstants.RIGHT);
+        label.setForeground(Color.BLACK); // 글자 색상을 검정색으로 변경
         return label;
+    }
+
+    // OpenCV Mat 객체를 BufferedImage로 변환
+    private BufferedImage matToBufferedImage(Mat mat) {
+        int width = mat.width();
+        int height = mat.height();
+        int channels = mat.channels();
+        byte[] data = new byte[width * height * channels];
+        mat.get(0, 0, data);
+
+        // BGR -> RGB로 변환
+        Mat rgbMat = new Mat();
+        Imgproc.cvtColor(mat, rgbMat, Imgproc.COLOR_BGR2RGB);
+
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+        image.getRaster().setDataElements(0, 0, width, height, data);
+        return image;
+    }
+
+    // 얼굴 인식 및 카메라 창 띄우기
+    private void startFaceRecognition() {
+        try {
+            CascadeClassifier faceDetector = new CascadeClassifier("src/FaceRegistration/cascade/haarcascade_frontalface_default.xml");
+            if (faceDetector.empty()) {
+                JOptionPane.showMessageDialog(this, "얼굴 인식 모델이 로드되지 않았습니다.");
+                return;
+            }
+
+            // 카메라 시작
+            VideoCapture capture = new VideoCapture(0);
+            if (!capture.isOpened()) {
+                JOptionPane.showMessageDialog(this, "카메라를 열 수 없습니다.");
+                return;
+            }
+
+            Mat frame = new Mat();
+            JFrame cameraFrame = new JFrame("얼굴 인식");
+            cameraFrame.setSize(640, 480);
+            cameraFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            JLabel cameraLabel = new JLabel();
+            cameraFrame.add(cameraLabel);
+            cameraFrame.setVisible(true);
+
+            // 타이머를 사용하여 카메라 프레임 갱신
+            Timer timer = new Timer(50, e -> {
+                if (capture.read(frame)) {
+                    MatOfRect faces = new MatOfRect();
+                    faceDetector.detectMultiScale(frame, faces);
+                    Rect[] facesArray = faces.toArray();
+
+                    for (Rect rect : facesArray) {
+                        Imgproc.rectangle(frame, rect.tl(), rect.br(), new Scalar(0, 0, 255), 3); // 빨간색 사각형 그리기
+                    }
+
+                    // OpenCV의 Mat 객체를 BufferedImage로 변환하여 JLabel에 표시
+                    BufferedImage img = matToBufferedImage(frame);
+                    cameraLabel.setIcon(new ImageIcon(img));
+                }
+            });
+            timer.start();
+
+            // 얼굴 인식 완료 후 처리
+            JOptionPane.showMessageDialog(this, "얼굴 인식이 완료되었습니다.");
+
+            // 얼굴 이미지를 데이터베이스에 저장
+            saveFaceToDatabase(frame);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "얼굴 인식 처리 중 오류가 발생했습니다: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    // 얼굴 이미지를 데이터베이스에 저장
+    private void saveFaceToDatabase(Mat faceImage) {
+        try {
+            // Mat을 byte[]로 변환
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            BufferedImage img = matToBufferedImage(faceImage);
+            ImageIO.write(img, "jpg", baos);
+            byte[] imageData = baos.toByteArray();
+
+            // MySQL 연결
+            String url = "jdbc:mysql://rds-mysql-metamong.cnku2aekidka.ap-northeast-2.rds.amazonaws.com:3306/your_database";
+            String username = "your_username";
+            String password = "your_password";
+
+            Connection conn = DriverManager.getConnection(url, username, password);
+
+            // SQL 쿼리 준비
+            String sql = "UPDATE user SET face = ? WHERE id = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setBytes(1, imageData);
+            pstmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
+
+            // 쿼리 실행
+            pstmt.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "얼굴 이미지가 저장되었습니다.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "얼굴 이미지를 저장하는 중 오류가 발생했습니다: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
