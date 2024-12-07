@@ -25,25 +25,26 @@ public class AuthService {
     }
 
     // 사용자 등록 메서드
-    public void register(String username, String password, String name, String email, String phone, String address, String detailAddress) {
-        String sql = "INSERT INTO user (name, id, password, email, phone, face, address, add_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; // 테이블 이름 수정
-        
-        try (Connection connection = getConnection(URL, USER, PASSWORD);  // 수정된 메서드 호출
-             PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, name);          // 이름
-            stmt.setString(2, username);      // 사용자 ID
-            stmt.setString(3, password);      // 비밀번호
-            stmt.setString(4, email);         // 이메일
-            stmt.setString(5, phone);         // 전화번호
-            stmt.setNull(6, java.sql.Types.BLOB);  // face는 기본적으로 NULL로 설정 (추후 얼굴 등록 시 값 추가)
-            stmt.setString(7, address);       // 주소
-            stmt.setString(8, detailAddress); // 상세 주소
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("사용자 등록 중 오류 발생: " + e.getMessage());
-            e.printStackTrace();
-        }
+public void register(String username, String password, String name, String email, String phone, String address, String detailAddress) {
+    String sql = "INSERT INTO user (username, name, password, email, phone, face, address, detail_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; // id를 제외한 수정된 쿼리
+
+    try (Connection connection = getConnection(URL, USER, PASSWORD);  // 수정된 메서드 호출
+         PreparedStatement stmt = connection.prepareStatement(sql)) {
+        stmt.setString(1, username);    // 사용자 ID
+        stmt.setString(2, name);        // 이름
+        stmt.setString(3, password);    // 비밀번호
+        stmt.setString(4, email);       // 이메일
+        stmt.setString(5, phone);       // 전화번호
+        stmt.setNull(6, java.sql.Types.BLOB);  // face는 기본적으로 NULL로 설정 (추후 얼굴 등록 시 값 추가)
+        stmt.setString(7, address);     // 주소
+        stmt.setString(8, detailAddress); // 상세 주소
+        stmt.executeUpdate();
+    } catch (SQLException e) {
+        System.out.println("사용자 등록 중 오류 발생: " + e.getMessage());
+        e.printStackTrace();
     }
+}
+
 
     // 로그인 인증 메서드
     public boolean login(String username, String password, Socket socket) {
