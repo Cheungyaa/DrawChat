@@ -19,7 +19,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.Socket;
 import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
@@ -227,35 +226,48 @@ public class SignUpForm extends JFrame {
         }
     }
 
-    // 얼굴 이미지를 데이터베이스에 저장
-    private void saveFaceToDatabase(Mat faceImage) {
+   // 얼굴 이미지를 데이터베이스에 저장
+private void saveFaceToDatabase(Mat faceImage) {
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+
+    try {
+        // Mat을 byte[]로 변환
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BufferedImage img = matToBufferedImage(faceImage); // 기존 메서드 호출
+        ImageIO.write(img, "jpg", baos);
+        byte[] imageData = baos.toByteArray();
+
+        // MySQL 연결
+        String url = "jdbc:mysql://rds-mysql-metamong.cnku2aekidka.ap-northeast-2.rds.amazonaws.com:3306/drawchat";
+        String username = "admin";
+        String password = "asdf4567";
+
+        conn = DriverManager.getConnection(url, username, password);
+
+        // SQL 쿼리 준비
+        String sql = "UPDATE user SET face = ? WHERE id = ?";
+        pstmt = conn.prepareStatement(sql);
+        pstmt.setBytes(1, imageData); // 이미지 데이터를 mediumblob에 저장
+        pstmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
+
+        // 쿼리 실행
+        int rowsUpdated = pstmt.executeUpdate();
+        if (rowsUpdated > 0) {
+            JOptionPane.showMessageDialog(this, "얼굴 이미지가 성공적으로 저장되었습니다.");
+        } else {
+            JOptionPane.showMessageDialog(this, "해당 아이디를 가진 사용자가 없습니다.");
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "얼굴 이미지를 저장하는 중 오류가 발생했습니다: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
         try {
-            // Mat을 byte[]로 변환
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BufferedImage img = matToBufferedImage(faceImage);
-            ImageIO.write(img, "jpg", baos);
-            byte[] imageData = baos.toByteArray();
-
-            // MySQL 연결
-            String url = "jdbc:mysql://rds-mysql-metamong.cnku2aekidka.ap-northeast-2.rds.amazonaws.com:3306/your_database";
-            String username = "your_username";
-            String password = "your_password";
-
-            Connection conn = DriverManager.getConnection(url, username, password);
-
-            // SQL 쿼리 준비
-            String sql = "UPDATE user SET face = ? WHERE id = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setBytes(1, imageData);
-            pstmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
-
-            // 쿼리 실행
-            pstmt.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "얼굴 이미지가 저장되었습니다.");
+            if (pstmt != null) pstmt.close();
+            if (conn != null) conn.close();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "얼굴 이미지를 저장하는 중 오류가 발생했습니다: " + e.getMessage());
             e.printStackTrace();
         }
     }
+}
 }

@@ -35,7 +35,7 @@ public void register(String username, String password, String name, String email
         stmt.setString(3, password);    // 비밀번호
         stmt.setString(4, email);       // 이메일
         stmt.setString(5, phone);       // 전화번호
-        stmt.setNull(6, java.sql.Types.BLOB);  // face는 기본적으로 NULL로 설정 (추후 얼굴 등록 시 값 추가)
+        stmt.setNull(6, java.sql.Types.BLOB);  
         stmt.setString(7, address);     // 주소
         stmt.setString(8, detailAddress); // 상세 주소
         stmt.executeUpdate();
@@ -48,7 +48,7 @@ public void register(String username, String password, String name, String email
 
     // 로그인 인증 메서드
     public boolean login(String username, String password, Socket socket) {
-        String sql = "SELECT * FROM user WHERE id = ? AND password = ?";  // 테이블 이름 수정
+        String sql = "SELECT * FROM user WHERE username = ? AND password = ?";  // 테이블 이름 수정
 
         try (Connection connection = getConnection(URL, USER, PASSWORD);  // 수정된 메서드 호출
              PreparedStatement stmt = connection.prepareStatement(sql)) {
