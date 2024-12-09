@@ -27,7 +27,7 @@ public class Server {
         private BufferedReader in;
         private String userName;
         private String roomName;
-        
+
         // 채팅 기록 파일
         private File chatHistoryFile;
 
@@ -40,7 +40,7 @@ public class Server {
             try {
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new PrintWriter(socket.getOutputStream(), true);
-                
+
                 // 사용자 이름 받기
                 userName = in.readLine();  // 사용자가 처음 연결될 때 사용자명 받기
                 out.println("Hello " + userName);
@@ -58,6 +58,9 @@ public class Server {
                 // 클라이언트로부터 메시지 처리
                 String message;
                 while ((message = in.readLine()) != null) {
+                    if (message.equalsIgnoreCase("/exit")) {  // /exit 명령어로 채팅방을 떠날 수 있도록 처리
+                        break;
+                    }
                     broadcastMessage(message);  // 채팅방 내 모든 클라이언트에게 메시지 전송
                     saveChatHistory(message);  // 메시지를 채팅 기록에 저장
                 }
@@ -78,6 +81,7 @@ public class Server {
 
         private void broadcastMessage(String message) {
             synchronized (rooms) {
+                // 채팅방에 연결된 모든 클라이언트에게 메시지 전송
                 for (ClientHandler client : rooms.get(roomName)) {
                     client.out.println(userName + ": " + message);
                 }

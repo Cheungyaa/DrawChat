@@ -7,13 +7,16 @@ import java.io.*;
 import java.net.Socket;
 
 public class ChatRoomForm extends JFrame {
-    private final Socket socket;
+    private Socket socket;
     private final String username;
     private final String roomName;
     private JTextArea chatArea;
     private JTextField inputField;
     private PrintWriter out;
+    private BufferedReader in;
+    private JButton sendButton;
 
+    // 생성자
     public ChatRoomForm(String username, Socket socket, String roomName) {
         this.username = username;
         this.socket = socket;
@@ -30,7 +33,7 @@ public class ChatRoomForm extends JFrame {
 
         // 메시지 입력 필드
         inputField = new JTextField();
-        JButton sendButton = new JButton("Send");
+        sendButton = new JButton("Send");
         sendButton.addActionListener(e -> sendMessage());
 
         // 버튼: 채팅방 나가기
@@ -60,14 +63,22 @@ public class ChatRoomForm extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        // 채팅 기록을 서버로부터 가져와서 표시하는 부분
+        loadChatHistory();
     }
 
     private void sendMessage() {
         String message = inputField.getText();
         if (!message.isEmpty()) {
-            out.println(message);
-            chatArea.append(username + ": " + message + "\n");
+        
+            // 서버에 메시지 전송, 채팅방 이름과 사용자 이름도 함께 전송
+            out.println("MESSAGE " + roomName + " " + message + " " + username); 
+            chatArea.append(username + ": " + message + "\n");  // 채팅 화면에 추가
             inputField.setText("");  // 메시지 전송 후 입력창 비우기
+
+            // 메시지 전송 후 버튼을 다시 활성화
+            sendButton.setEnabled(true);
         }
     }
 
@@ -78,14 +89,31 @@ public class ChatRoomForm extends JFrame {
 
     private void listenForMessages() {
         new Thread(() -> {
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            try {
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String message;
                 while ((message = in.readLine()) != null) {
-                    chatArea.append(message + "\n");
+                    chatArea.append(message + "\n");  // 받은 메시지 채팅 화면에 추가
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    // 채팅 기록을 서버로부터 가져와서 표시하는 메서드
+    private void loadChatHistory() {
+        // 서버로부터 해당 채팅방의 기록을 요청하고, 기록을 받아서 표시하는 코드 작성
+        // 예시로 채팅 기록을 요청하는 메세지를 서버로 전송
+        out.println("LOAD_HISTORY " + roomName); 
+
+        // 여기서는 서버에서 채팅 기록을 받을 때마다 화면에 추가하는 방식입니다.
+        // 서버에서 채팅 기록을 전송하면 listenForMessages()에서 처리됩니다.
+    }
+
+    // 채팅방을 닫고 다시 열 때 소켓을 유지하도록 함
+    public static void openChatRoom(String username, Socket existingSocket, String roomName) {
+        // 기존 소켓을 재사용하여 새 창을 여는 메서드
+        new ChatRoomForm(username, existingSocket, roomName);
     }
 }

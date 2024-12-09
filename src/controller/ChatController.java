@@ -30,7 +30,8 @@ public class ChatController {
             String[] parts = request.split(" ");
             String roomName = parts[1];
             String message = parts[2];
-            chatService.saveMessage(roomName, message);  // 메시지 저장
+            String sender = parts[3];  // 보낸 사람도 포함되도록 수정
+            chatService.saveMessage(roomName, sender, message);  // 메시지 저장 (DB에 저장)
             out.write("MESSAGE_SENT\n");
         }
         out.flush();
