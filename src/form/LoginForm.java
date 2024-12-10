@@ -54,26 +54,23 @@ public class LoginForm extends JFrame {
         pwField = new JPasswordField();
         pwField.setBounds(180, 400, 120, 30);
 
-        // 로그인 및 회원가입 버튼
+        // 로그인 버튼
         loginButton = new RoundedButton("Login");
-        loginButton.setBounds(100, 450, 90, 30); // 위치 조정
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = idField.getText();
-                String password = new String(pwField.getPassword());
-                if (username.isEmpty() || password.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "ID와 Password를 입력해주세요.", "Login Error", JOptionPane.ERROR_MESSAGE);
+        loginButton.setBounds(100, 450, 90, 30);
+        loginButton.addActionListener(e -> {
+            String username = idField.getText();
+            String password = new String(pwField.getPassword());
+            if (username.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "ID와 Password를 입력해주세요.", "Login Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                // AuthService를 통해 로그인 시도
+                boolean loginSuccess = authService.login(username, password);
+                if (loginSuccess) {
+                    JOptionPane.showMessageDialog(this, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
+                    dispose(); // 현재 창 닫기
+                    new WaitingRoomForm(username); // 대기실 창으로 이동
                 } else {
-                    // AuthService를 통해 로그인 시도
-                    boolean loginSuccess = authService.login(username, password, socket);
-                    if (loginSuccess) {
-                        JOptionPane.showMessageDialog(null, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
-                        dispose(); // 현재 창 닫기
-                        new WaitingRoomForm(username); // 대기실 창으로 이동
-                    } else {
-                        JOptionPane.showMessageDialog(null, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
-                    }
+                    JOptionPane.showMessageDialog(this, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });

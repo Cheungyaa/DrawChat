@@ -112,6 +112,26 @@ public class AuthService {
         }
         return false;
     }
+
+    // 로그인 메서드
+    public boolean login(String username, String password) {
+        String sql = "SELECT password FROM user WHERE username = ?";
+        try (Connection connection = getConnection(URL, USER, PASSWORD);
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            try (ResultSet resultSet = stmt.executeQuery()) {
+                if (resultSet.next()) {
+                    String storedPassword = resultSet.getString("password");
+                    return storedPassword.equals(password); // 비밀번호가 일치하면 true 반환
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("로그인 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false; // 로그인 실패
+    }
     
     // 사용자 정보 추출 메서드
     public User getUserInfo(String username) {
