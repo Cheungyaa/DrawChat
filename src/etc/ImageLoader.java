@@ -1,3 +1,5 @@
+// src/etc/ImageLoader.java
+
 package etc;
 
 import javax.swing.*;

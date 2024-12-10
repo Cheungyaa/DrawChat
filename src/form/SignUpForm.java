@@ -1,3 +1,5 @@
+// src/form/SignUpForm.java
+
 package form;
 
 import etc.RoundedButton;
@@ -19,7 +21,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.Socket;
 import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
@@ -50,7 +51,7 @@ public class SignUpForm extends JFrame {
         this.socket = socket;
         authService = new AuthService();
 
-        setTitle("DrawChat - 회원가입");
+        setTitle("DrawChat - SignUp");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         JPanel mainPanel = new JPanel();
@@ -106,28 +107,46 @@ public class SignUpForm extends JFrame {
         // 이벤트 설정
         signUpButton.addActionListener(e -> {
             String name = nameField.getText();
-            String id = idField.getText();
+            String username = idField.getText();
             String password = new String(pwField.getPassword());
             String email = emailField.getText();
             String phone = phoneField.getText();
             String address = addressField.getText();
             String detailAddress = detailAddressField.getText();
 
-            if (name.isEmpty() || id.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || detailAddress.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "모든 필드를 입력해주세요.");
+            if (name.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty() || phone.isEmpty() || address.isEmpty() || detailAddress.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "모든 필드를 입력해주세요.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!authService.validateId(username)) {
+                JOptionPane.showMessageDialog(this, "아이디는 1~20글자, 영문자와 숫자만 가능합니다.", "아이디 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!authService.validatePassword(password)) {
+                JOptionPane.showMessageDialog(this, "비밀번호는 1~20글자, 문자+숫자+특수문자의 조합이어야 합니다.", "비밀번호 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (authService.isIdDuplicate(username)) {
+                JOptionPane.showMessageDialog(this, "아이디가 이미 존재합니다.", "아이디 중복", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            boolean success = authService.register(username, password, name, email, phone, address, detailAddress);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다!", "성공", JOptionPane.INFORMATION_MESSAGE);
+                dispose(); // 창 닫기
             } else {
-                try {
-                    authService.register(id, password, name, email, phone, address, detailAddress);
-                    JOptionPane.showMessageDialog(this, "환영합니다!");
-                    dispose(); // 회원가입 후 창 닫기
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "회원가입 실패: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
+                JOptionPane.showMessageDialog(this, "회원가입 실패. 다시 시도해주세요.", "실패", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        cancelButton.addActionListener(e -> dispose());
+        cancelButton.addActionListener(e -> { // 로그인 화면으로 돌아가기
+            dispose();
+            new LoginForm(socket);
+        });
 
         faceRecognitionButton.addActionListener(e -> startFaceRecognition());
 
@@ -245,12 +264,12 @@ public class SignUpForm extends JFrame {
 
             // SQL 쿼리 준비
             String sql = "UPDATE user SET face = ? WHERE id = ?";
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setBytes(1, imageData);
-            pstmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setBytes(1, imageData);
+            stmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
 
             // 쿼리 실행
-            pstmt.executeUpdate();
+            stmt.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "얼굴 이미지가 저장되었습니다.");
         } catch (Exception e) {

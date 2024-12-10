@@ -1,3 +1,5 @@
+// src/controller/AuthController.java
+
 package controller;
 
 import java.io.BufferedReader;

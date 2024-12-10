@@ -1,3 +1,5 @@
+// src/main/Main.java
+
 package main;
 
 import org.opencv.core.Core; // OpenCV의 핵심 기능을 사용하기 위한 클래스

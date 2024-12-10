@@ -1,3 +1,5 @@
+// src/form//LoginForm.java
+
 package form;
 
 import service.AuthService;
@@ -68,7 +70,7 @@ public class LoginForm extends JFrame {
                     if (loginSuccess) {
                         JOptionPane.showMessageDialog(null, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
                         dispose(); // 현재 창 닫기
-                        new WaitingForm(username, socket); // 대기실 창으로 이동
+                        new WaitingRoomForm(username); // 대기실 창으로 이동
                     } else {
                         JOptionPane.showMessageDialog(null, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -130,7 +132,7 @@ public class LoginForm extends JFrame {
             if (verifyFaceWithDatabase(faceImage, username, password)) {
                 JOptionPane.showMessageDialog(this, "얼굴 인식 로그인 성공!");
                 dispose();  // 로그인 성공 후 창 닫기
-                new WaitingForm(username, socket);  // 대기실 창으로 이동
+                new WaitingRoomForm(username);  // 대기실 창으로 이동
             } else {
                 JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
             }
