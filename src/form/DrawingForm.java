@@ -133,7 +133,7 @@ class DrawingPanel extends JPanel {
 
     // 현재 이미지를 반환
     public BufferedImage createImage() {
-        return image;
+        return copyImage(image); // 이미지를 복사하여 반환
     }
 
     // 색상 선택 메서드
@@ -174,7 +174,7 @@ class DrawingPanel extends JPanel {
         BufferedImage copy = new BufferedImage(source.getWidth(), source.getHeight(), source.getType()); // 새로운 이미지 생성
         Graphics2D g = copy.createGraphics(); // 그래픽 객체 생성
         g.drawImage(source, 0, 0, null); // 원본 이미지 복사
-        g.dispose(); // 그래픽 리소스 해제
+        g.dispose(); // 그래픽 객체 해제
         return copy; // 복사된 이미지 반환
     }
 }
