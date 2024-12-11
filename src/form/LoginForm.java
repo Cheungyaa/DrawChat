@@ -1,5 +1,3 @@
-// src/form//LoginForm.java
-
 package form;
 
 import service.AuthService;
@@ -21,6 +19,9 @@ public class LoginForm extends JFrame {
     private RoundedButton faceLoginButton;  // 얼굴 인식 로그인 버튼 추가
     private Socket socket;
     private AuthService authService;
+    
+    // 로그인 리스너 인터페이스
+    private LoginListener loginListener;
 
     public LoginForm(Socket socket) {
         this.socket = socket;
@@ -69,6 +70,9 @@ public class LoginForm extends JFrame {
                     JOptionPane.showMessageDialog(this, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
                     dispose(); // 현재 창 닫기
                     new WaitingRoomForm(username); // 대기실 창으로 이동
+                    if (loginListener != null) {
+                        loginListener.onLoginSuccess();  // 로그인 성공 후 리스너 호출
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -130,6 +134,9 @@ public class LoginForm extends JFrame {
                 JOptionPane.showMessageDialog(this, "얼굴 인식 로그인 성공!");
                 dispose();  // 로그인 성공 후 창 닫기
                 new WaitingRoomForm(username);  // 대기실 창으로 이동
+                if (loginListener != null) {
+                    loginListener.onLoginSuccess();  // 얼굴 인식 로그인 성공 시 리스너 호출
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -149,5 +156,15 @@ public class LoginForm extends JFrame {
     private boolean verifyFaceWithDatabase(Mat faceImage, String username, String password) {
         // 실제로 얼굴 이미지를 데이터베이스에 저장된 이미지와 비교하는 로직이 필요
         return true;  // 얼굴 인식 성공 시 true 반환 (실제 비교 로직 필요)
+    }
+
+    // 로그인 리스너 인터페이스 정의
+    public interface LoginListener {
+        void onLoginSuccess();  // 로그인 성공 시 호출될 메서드
+    }
+
+    // 로그인 리스너 설정
+    public void addLoginListener(LoginListener listener) {
+        this.loginListener = listener;
     }
 }

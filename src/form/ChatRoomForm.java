@@ -155,10 +155,13 @@ public class ChatRoomForm extends JPanel {
         returnToRoomList(); // 메인 화면으로 돌아감
     }
 
+    
     private void openDrawingTool() {
-        // 그림 그리기 기능: 추후 구현 가능
-        JOptionPane.showMessageDialog(this, "그림 그리기 기능은 준비 중입니다!");
+    // DrawingForm 창을 열고 현재 채팅 화면은 그대로 유지
+    SwingUtilities.invokeLater(() -> new form.DrawingForm());
     }
+
+
 
     public void showParticipants() {
         JOptionPane.showMessageDialog(this, "참여자 목록:\n" + String.join("\n", participants), "참여자", JOptionPane.INFORMATION_MESSAGE);
