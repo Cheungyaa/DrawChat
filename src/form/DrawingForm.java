@@ -56,12 +56,21 @@ public class DrawingForm extends JFrame {
     // 그림 저장 메서드
     private void saveDrawing() {
         JFileChooser fileChooser = new JFileChooser(); // 파일 선택 창 생성
-        int result = fileChooser.showSaveDialog(this); // 저장 대화 상자 표시
+        fileChooser.setDialogTitle("새로운 파일 저장"); // 대화 상자 제목 설정
+        fileChooser.setAcceptAllFileFilterUsed(false); // 모든 파일 필터 사용 안 함
+        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PNG 파일", "png")); // PNG 파일만 선택할 수 있도록 필터 설정
+
+        int result = fileChooser.showSaveDialog(this); // 저장 대화상자 표시
         if (result == JFileChooser.APPROVE_OPTION) { // 파일 선택 확인
             File file = fileChooser.getSelectedFile(); // 선택한 파일 가져오기
+            // 파일 확장자가 없으면 자동으로 .png 확장자 추가
+            if (!file.getName().toLowerCase().endsWith(".png")) {
+                file = new File(file.getAbsolutePath() + ".png");
+            }
+            
             try {
                 BufferedImage image = drawingPanel.createImage(); // 드로잉 이미지 가져오기
-                ImageIO.write(image, "PNG", file); // PNG 형식으로 파일 저장
+                ImageIO.write(image, "PNG", file); // PNG 형식으로 선택한 파일에 저장
                 System.out.println("File saved: " + file.getAbsolutePath());
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -133,7 +142,7 @@ class DrawingPanel extends JPanel {
 
     // 현재 이미지를 반환
     public BufferedImage createImage() {
-        return copyImage(image); // 이미지를 복사하여 반환
+        return image;
     }
 
     // 색상 선택 메서드
@@ -174,7 +183,7 @@ class DrawingPanel extends JPanel {
         BufferedImage copy = new BufferedImage(source.getWidth(), source.getHeight(), source.getType()); // 새로운 이미지 생성
         Graphics2D g = copy.createGraphics(); // 그래픽 객체 생성
         g.drawImage(source, 0, 0, null); // 원본 이미지 복사
-        g.dispose(); // 그래픽 객체 해제
-        return copy; // 복사된 이미지 반환
+        g.dispose();
+        return copy;
     }
 }
