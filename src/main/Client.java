@@ -14,24 +14,32 @@ public class Client {
                 // 서버에 연결
                 Socket socket = new Socket("127.0.0.1", 9090); // 서버 주소와 포트 설정
 
-                // 로그인 폼을 띄우고 로그인 리스너를 추가
+                // 로그인 폼을 띄우고 로그인 성공 후 작업 정의
                 LoginForm loginForm = new LoginForm(socket);
                 loginForm.setVisible(true);
 
-                // 로그인 후 동작을 정의
-                loginForm.addLoginListener(() -> {
-                    // 로그인 성공 후 작업 (예: 로그인 성공 메시지 출력)
-                    System.out.println("로그인 성공!");
-
-                    // 로그인 성공 후 실시간 데이터 수신을 위한 스레드 시작
-                    new Thread(() -> listenToServer(socket)).start();
-                });
+                
 
             } catch (IOException e) {
                 System.err.println("서버 연결 실패: " + e.getMessage());
                 e.printStackTrace(); // 더 자세한 예외 정보 출력
             }
         });
+    }
+
+    // 로그인 성공 후 동작 정의
+    private static void onLoginSuccess(Socket socket, LoginForm loginForm) {
+        // 로그인 폼 닫기
+        SwingUtilities.invokeLater(loginForm::dispose);
+
+        // 로그인 성공 메시지 출력
+        System.out.println("로그인 성공!");
+
+        // 그림판 열기
+        openDrawingBoard(socket);
+
+        // 서버로부터 실시간 데이터 수신 스레드 시작
+        new Thread(() -> listenToServer(socket)).start();
     }
 
     // 서버로부터 실시간 데이터 수신
@@ -57,8 +65,8 @@ public class Client {
         }
     }
 
-    // 필요할 때 그림판을 띄우는 메서드
-    public static void openDrawingBoard(Socket socket) {
+    // 그림판 열기
+    private static void openDrawingBoard(Socket socket) {
         SwingUtilities.invokeLater(() -> {
             // 그림판 화면으로 이동
             DrawingForm drawingForm = new DrawingForm();

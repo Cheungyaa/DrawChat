@@ -9,9 +9,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.Socket;
 
-import org.opencv.core.Mat;  // OpenCV Mat 클래스 추가
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfRect;
+import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.videoio.VideoCapture;
 
 public class LoginForm extends JFrame {
+
     private JTextField idField;
     private JPasswordField pwField;
     private RoundedButton loginButton;
@@ -19,14 +25,11 @@ public class LoginForm extends JFrame {
     private RoundedButton faceLoginButton;  // 얼굴 인식 로그인 버튼 추가
     private Socket socket;
     private AuthService authService;
-    
-    // 로그인 리스너 인터페이스
-    private LoginListener loginListener;
 
     public LoginForm(Socket socket) {
         this.socket = socket;
         this.authService = new AuthService();  // AuthService 객체 초기화
-        
+
         setTitle("DrawChat - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 600);
@@ -70,9 +73,6 @@ public class LoginForm extends JFrame {
                     JOptionPane.showMessageDialog(this, "로그인 성공!", "Login", JOptionPane.INFORMATION_MESSAGE);
                     dispose(); // 현재 창 닫기
                     new WaitingRoomForm(username); // 대기실 창으로 이동
-                    if (loginListener != null) {
-                        loginListener.onLoginSuccess();  // 로그인 성공 후 리스너 호출
-                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "ID 또는 Password가 잘못되었습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -119,26 +119,20 @@ public class LoginForm extends JFrame {
         String username = idField.getText();
         String password = new String(pwField.getPassword());
 
-        // 아이디와 비밀번호가 입력되지 않은 경우
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "ID와 Password를 입력해주세요.", "Login Error", JOptionPane.ERROR_MESSAGE);
-            return;  // 아이디와 비밀번호 입력하지 않으면 로그인 처리 안됨
+            return;
         }
 
-        // 얼굴 인식 시작
-        Mat faceImage = startFaceRecognition();  // 얼굴 인식 함수 호출
+        Mat faceImage = startFaceRecognition();
 
         if (faceImage != null) {
-            // 얼굴 인식된 이미지와 사용자가 입력한 정보로 로그인 처리
             if (verifyFaceWithDatabase(faceImage, username, password)) {
                 JOptionPane.showMessageDialog(this, "얼굴 인식 로그인 성공!");
-                dispose();  // 로그인 성공 후 창 닫기
-                new WaitingRoomForm(username);  // 대기실 창으로 이동
-                if (loginListener != null) {
-                    loginListener.onLoginSuccess();  // 얼굴 인식 로그인 성공 시 리스너 호출
-                }
+                dispose();
+                new WaitingRoomForm(username);
             } else {
-                JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "얼굴 인식 또는 사용자 정보가 일치하지 않습니다.", "Login Error", JOptionPane.ERROR_MESSAGE);
             }
         } else {
             JOptionPane.showMessageDialog(this, "얼굴을 인식할 수 없습니다. 다시 시도해주세요.", "Face Recognition Error", JOptionPane.ERROR_MESSAGE);
@@ -147,24 +141,37 @@ public class LoginForm extends JFrame {
 
     // 얼굴 인식을 위한 처리 (OpenCV 등을 이용)
     private Mat startFaceRecognition() {
-        // OpenCV를 이용한 얼굴 인식 처리
-        // 실제로 OpenCV를 이용해 카메라에서 얼굴을 인식하고 그 이미지를 반환하도록 구현해야 합니다.
-        return null;  // 실제 얼굴 인식 처리 후 이미지 반환
+        String cascadePath = "src/FaceRegistration/cascade/haarcascade_frontalface_default.xml";
+        CascadeClassifier faceDetector = new CascadeClassifier();
+
+        if (!faceDetector.load(cascadePath)) {
+            JOptionPane.showMessageDialog(this, "얼굴 검출기를 로드하지 못했습니다.", "Error", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
+        VideoCapture capture = new VideoCapture(0);
+        if (!capture.isOpened()) {
+            JOptionPane.showMessageDialog(this, "웹캠을 열 수 없습니다.", "Error", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
+        Mat frame = new Mat();
+        MatOfRect faces = new MatOfRect();
+        while (capture.read(frame)) {
+            faceDetector.detectMultiScale(frame, faces);
+            if (faces.toArray().length > 0) {
+                capture.release();
+                return frame;
+            }
+        }
+
+        capture.release();
+        return null;
     }
 
-    // 데이터베이스에서 얼굴 인식과 사용자 정보를 비교하여 로그인 검증
+    // 얼굴 데이터베이스와 비교
     private boolean verifyFaceWithDatabase(Mat faceImage, String username, String password) {
-        // 실제로 얼굴 이미지를 데이터베이스에 저장된 이미지와 비교하는 로직이 필요
-        return true;  // 얼굴 인식 성공 시 true 반환 (실제 비교 로직 필요)
-    }
-
-    // 로그인 리스너 인터페이스 정의
-    public interface LoginListener {
-        void onLoginSuccess();  // 로그인 성공 시 호출될 메서드
-    }
-
-    // 로그인 리스너 설정
-    public void addLoginListener(LoginListener listener) {
-        this.loginListener = listener;
+        // TODO: 데이터베이스와 얼굴 매칭 로직 구현
+        return true;  // 임시로 항상 성공으로 처리
     }
 }

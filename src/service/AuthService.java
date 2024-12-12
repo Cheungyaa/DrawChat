@@ -317,4 +317,9 @@ public class AuthService {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'signUp'");
     }
+
+    public byte[] getFaceImage(String username, String password2) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getFaceImage'");
+    }
 }

@@ -246,7 +246,6 @@ public class SignUpForm extends JFrame {
         }
     }
 
-    // 얼굴 이미지를 데이터베이스에 저장
     private void saveFaceToDatabase(Mat faceImage) {
         try {
             // Mat을 byte[]로 변환
@@ -254,27 +253,34 @@ public class SignUpForm extends JFrame {
             BufferedImage img = matToBufferedImage(faceImage);
             ImageIO.write(img, "jpg", baos);
             byte[] imageData = baos.toByteArray();
-
+    
             // MySQL 연결
-            String url = "jdbc:mysql://rds-mysql-metamong.cnku2aekidka.ap-northeast-2.rds.amazonaws.com:3306/your_database";
-            String username = "your_username";
-            String password = "your_password";
-
+            String url = "jdbc:mysql://rds-mysql-metamong.cnku2aekidka.ap-northeast-2.rds.amazonaws.com:3306/drawchat";
+            String username = "admin";
+            String password = "asdf4567";
             Connection conn = DriverManager.getConnection(url, username, password);
-
+    
             // SQL 쿼리 준비
-            String sql = "UPDATE user SET face = ? WHERE id = ?";
+            String sql = "INSERT INTO user (name, username, password, email, phone, face, address, detail_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setBytes(1, imageData);
-            stmt.setString(2, idField.getText()); // 사용자 아이디를 가져옴
-
+            stmt.setString(1, nameField.getText());
+            stmt.setString(2, idField.getText());
+            stmt.setString(3, new String(pwField.getPassword()));
+            stmt.setString(4, emailField.getText());
+            stmt.setString(5, phoneField.getText());
+            stmt.setBytes(6, imageData);
+            stmt.setString(7, addressField.getText());
+            stmt.setString(8, detailAddressField.getText());
+    
             // 쿼리 실행
             stmt.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "얼굴 이미지가 저장되었습니다.");
+    
+            JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다!");
+            dispose();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "얼굴 이미지를 저장하는 중 오류가 발생했습니다: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "회원가입 중 오류가 발생했습니다: " + e.getMessage());
             e.printStackTrace();
         }
     }
-}
+    
+}    
