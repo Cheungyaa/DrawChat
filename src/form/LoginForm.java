@@ -140,38 +140,50 @@ public class LoginForm extends JFrame {
     }
 
     // 얼굴 인식을 위한 처리 (OpenCV 등을 이용)
-    private Mat startFaceRecognition() {
-        String cascadePath = "src/FaceRegistration/cascade/haarcascade_frontalface_default.xml";
-        CascadeClassifier faceDetector = new CascadeClassifier();
+private Mat startFaceRecognition() {
+    String cascadePath = "src/FaceRegistration/cascade/haarcascade_frontalface_default.xml";
+    CascadeClassifier faceDetector = new CascadeClassifier();
 
-        if (!faceDetector.load(cascadePath)) {
-            JOptionPane.showMessageDialog(this, "얼굴 검출기를 로드하지 못했습니다.", "Error", JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
-
-        VideoCapture capture = new VideoCapture(0);
-        if (!capture.isOpened()) {
-            JOptionPane.showMessageDialog(this, "웹캠을 열 수 없습니다.", "Error", JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
-
-        Mat frame = new Mat();
-        MatOfRect faces = new MatOfRect();
-        while (capture.read(frame)) {
-            faceDetector.detectMultiScale(frame, faces);
-            if (faces.toArray().length > 0) {
-                capture.release();
-                return frame;
-            }
-        }
-
-        capture.release();
+    if (!faceDetector.load(cascadePath)) {
+        JOptionPane.showMessageDialog(this, "얼굴 검출기를 로드하지 못했습니다.", "Error", JOptionPane.ERROR_MESSAGE);
         return null;
     }
 
-    // 얼굴 데이터베이스와 비교
-    private boolean verifyFaceWithDatabase(Mat faceImage, String username, String password) {
-        // TODO: 데이터베이스와 얼굴 매칭 로직 구현
-        return true;  // 임시로 항상 성공으로 처리
+    VideoCapture capture = new VideoCapture(0);
+    if (!capture.isOpened()) {
+        JOptionPane.showMessageDialog(this, "웹캠을 열 수 없습니다.", "Error", JOptionPane.ERROR_MESSAGE);
+        return null;
     }
+
+    Mat frame = new Mat();
+    MatOfRect faces = new MatOfRect();
+    while (capture.read(frame)) {
+        faceDetector.detectMultiScale(frame, faces);
+        if (faces.toArray().length > 0) {
+            // 검출된 얼굴 중 첫 번째 얼굴 추출
+            for (Rect rect : faces.toArray()) {
+                Mat faceImage = new Mat(frame, rect); // 얼굴 영역 자르기
+                capture.release(); // 웹캠 해제
+                return faceImage; // 얼굴 이미지 반환
+            }
+        }
+    }
+
+    capture.release(); // 웹캠 해제
+    return null; // 얼굴이 검출되지 않은 경우
+}
+
+// 얼굴 데이터베이스와 비교
+private boolean verifyFaceWithDatabase(Mat faceImage, String username, String password) {
+    // 얼굴 데이터를 데이터베이스와 비교
+    double matchPercentage = matchFaceWithDatabase(faceImage, username, password);
+    return matchPercentage >= 70.0; // 일치율 70% 이상인 경우 성공
+}
+
+// 얼굴 매칭 로직 (예시 메서드)
+private double matchFaceWithDatabase(Mat faceImage, String username, String password) {
+    // TODO: 데이터베이스에서 사용자 얼굴 데이터를 가져오고 일치율 계산
+    // 임시 구현: 항상 70%로 가정
+    return 70.0;
+}
 }
