@@ -1,0 +1,12 @@
+# 일반 플레이어도 특정 Skript 명령어를 실행할 수 있도록 설정
+allow-unsafe-commands: true
+disable-op-requirement: true
+
+# 특정 Skript 명령어만 허용
+command-whitelist:
+  - 아케이드_실행_사다리
+  - 아케이드_실행_경마
+  - 아케이드_실행_룰렛
+
+# Skript의 명령어 실행 오류를 최소화
+log-execution-errors: false
