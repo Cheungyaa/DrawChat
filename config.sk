@@ -10,3 +10,5 @@ command-whitelist:
 
 # Skript의 명령어 실행 오류를 최소화
 log-execution-errors: false
+# Skript의 명령어 실행 오류를 최소화
+log-execution-errors: false
