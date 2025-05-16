@@ -1,4 +1,4 @@
-# 일반 플레이어도 특정 Skript 명령어를 실행할 수 있도록 설정
+ty# 일반 플레이어도 특정 Skript 명령어를 실행할 수 있도록 설정
 allow-unsafe-commands: true
 disable-op-requirement: true
 
